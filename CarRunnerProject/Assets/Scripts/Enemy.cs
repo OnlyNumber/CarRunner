@@ -1,5 +1,4 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDisposable
@@ -30,7 +29,46 @@ public class Enemy : MonoBehaviour, IDisposable
         _healthSystem.OnDeath += Death;
 
     }
+    #region  Test
 
+    public bool TestAttack = false;
+    public GameObject TestTarget;
+
+    [ContextMenu("ActivateTest")]
+    public void ActivateTest()
+    {
+        TestTarget = GameObject.Find("PlayerCar");
+        TestAttack = true;
+    }
+
+    private void Update()
+    {
+        if (TestAttack)
+        {
+            transform.position += transform.forward * _speed * Time.deltaTime;
+
+            Vector3 dir = TestTarget.transform.position - transform.position; 
+
+            Vector3 moveDirection = new Vector3(dir.x, 0f, dir.z).normalized;
+
+            // 2. Якщо гравець натискає кнопки (є напрямок)
+            if (moveDirection != Vector3.zero)
+            {
+                // Створюємо цільовий поворот у напрямку руху
+                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
+
+                // Плавне повертання з постійною швидкістю
+                transform.rotation = Quaternion.RotateTowards(
+                    transform.rotation,
+                    targetRotation,
+                    60 * Time.deltaTime
+                );
+            }
+
+            //transform.rotation =
+        }
+    }
+    #endregion
     private void ActivateHealthBar()
     {
         if (_healthSystem.CurrentHealth <= 0)
@@ -45,7 +83,7 @@ public class Enemy : MonoBehaviour, IDisposable
     {
         if (_healthBar == null || _healthSystem == null)
             return;
-            
+
         _healthBar.ChangeHealthBar((float)_healthSystem.CurrentHealth / (float)_healthSystem.MaxHealth);
 
     }

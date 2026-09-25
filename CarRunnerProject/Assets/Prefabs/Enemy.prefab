@@ -49,9 +49,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   _enemyModel: {fileID: 319549101180625038}
   _reactionRadius: 0
-  _speed: 0
+  _speed: 3
   damage: 5
   _healthBar: {fileID: 400888862996375594}
+  TestAttack: 0
+  TestTarget: {fileID: 0}
 --- !u!136 &6271856758059293047
 CapsuleCollider:
   m_ObjectHideFlags: 0
