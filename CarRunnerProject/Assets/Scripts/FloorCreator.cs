@@ -12,7 +12,7 @@ public class FloorCreator : MonoBehaviour
     [SerializeField] private Transform ParentForPlatforms;
 
     //Add Zenject
-    [SerializeField] private CarMover _carMover;
+    [SerializeField] private CarController _carMover;
     [SerializeField] private EnemySpawner _enemySpawner;
 
 

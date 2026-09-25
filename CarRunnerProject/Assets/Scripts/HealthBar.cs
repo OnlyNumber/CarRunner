@@ -18,7 +18,6 @@ public class HealthBar : MonoBehaviour
 
     public void Activate()
     {
-        _currentPercent = 1;
         gameObject.SetActive(true);
         _watchInCameraCoroutine = StartCoroutine(WatchInCamera());
     }
@@ -36,6 +35,7 @@ public class HealthBar : MonoBehaviour
 
         _watchInCameraCoroutine = null;
         #endregion
+        _currentPercent = 1;
 
         gameObject.SetActive(false);
     }
@@ -45,7 +45,8 @@ public class HealthBar : MonoBehaviour
         _settedPercent = percentOfHealth;
         _health.value = _settedPercent;
 
-        _slowHealthCoroutine = StartCoroutine(ChangeHealth());
+        if (_slowHealthCoroutine == null)
+            _slowHealthCoroutine = StartCoroutine(ChangeHealth());
     }
 
     private IEnumerator ChangeHealth()
@@ -58,18 +59,18 @@ public class HealthBar : MonoBehaviour
             yield return null;
 
         } while (_currentPercent >= _settedPercent);
+        
+        _slowHealthCoroutine = null;
     }
 
     private IEnumerator WatchInCamera()
     {
         do
         {
-            
-        //transform.LookAt(Camera.main.transform.position);
-        transform.rotation = Quaternion.Euler(new Vector3(45, 0, 0));
-        yield return null;
-        
-        }while(true);
+            transform.rotation = Quaternion.Euler(new Vector3(45, 0, 0));
+            yield return null;
+
+        } while (true);
 
     }
 
