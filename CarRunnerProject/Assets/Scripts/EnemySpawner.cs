@@ -7,9 +7,6 @@ public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private Enemy enemyPrefab;
 
-    [SerializeField] private int CountOfEnemiesPerWave;
-    [SerializeField] private float SpawnRadius;
-
     private IObjectPool<Enemy> enemiesPool;
 
     private void Awake()
@@ -17,12 +14,12 @@ public class EnemySpawner : MonoBehaviour
         enemiesPool = new ObjectPool<Enemy>(CreateEnemy, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, maxSize: 200);
     }
 
-    public void SpawnWave(Vector3 position)
+    public void SpawnWave(Vector3 position, float spawnRadius, int countOfEnemiesPerWave)
     {
-        for (int i = 0; i < CountOfEnemiesPerWave; i++)
+        for (int i = 0; i < countOfEnemiesPerWave; i++)
         {
             var enemy = enemiesPool.Get();
-            enemy.transform.position = position + new Vector3(Random.Range(-SpawnRadius, SpawnRadius), Random.Range(-SpawnRadius, SpawnRadius));
+            enemy.transform.position = position + new Vector3(Random.Range(-spawnRadius, spawnRadius), 0, Random.Range(-spawnRadius, spawnRadius));
         }
     }
 

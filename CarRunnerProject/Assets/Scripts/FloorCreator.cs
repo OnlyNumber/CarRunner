@@ -23,7 +23,7 @@ public class FloorCreator : MonoBehaviour
     private void Start()
     {
         CreatePlatforms();
-        _enemySpawner.SpawnWave(_platformsPool[1].position);
+        _enemySpawner.SpawnWave(_platformsPool[1].position, 5, 5);
     }
 
     private void CreatePlatforms()
@@ -52,7 +52,6 @@ public class FloorCreator : MonoBehaviour
 
     private void SetPlatformPosition(Transform platform)
     {
-        Debug.Log("SetPlatforms");
         Transform currentLastPlatform = _platformsPool[0];
 
         foreach (var platformFromPool in _platformsPool)
