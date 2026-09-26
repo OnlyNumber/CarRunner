@@ -51,7 +51,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
   _wanderRadius: 3
   _wanderWaiting: {x: 1, y: 3}
-  _reactionRadius: 15
+  _reactionRadius: 13
   _speed: 1.5
   _rotationSpeed: 120
   _damage: 5
@@ -59,6 +59,7 @@ MonoBehaviour:
   _unitAnimator: {fileID: 8718916388149642038}
   _unitMovement: {fileID: 3814532481405731859}
   _healthBar: {fileID: 7753223565282245801}
+  _distanceToDeathInMoving: 2
 --- !u!136 &8533631969840036752
 CapsuleCollider:
   m_ObjectHideFlags: 0

@@ -1,12 +1,10 @@
 using System;
-using System.Collections;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 {
-
     #region  Stats
     [SerializeField] private float _wanderRadius;
     [SerializeField] private Vector2 _wanderWaiting;
@@ -26,19 +24,24 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
     [SerializeField] private HealthBar _healthBar;
     #endregion
 
-    private HealthSystem _healthSystem;
-
-    private Transform _testTarget;
+    #region  MovingToTarget
+    private Transform _enemyTarget;
     private bool _isMovingToTarget = false;
     private UnitAnimator.StateAnimation _lastAnimation;
+    [SerializeField] private float _distanceToDeathInMoving;
+    #endregion
 
+    #region PooledObject
     public GameObject GameObject => gameObject;
-
     public event Action<IPooledObject> ReturnToPoolAction;
+    #endregion
 
+    #region  UniTask
     private CancellationTokenSource _ctCurrentState;
-
     private CancellationTokenSource _ctWaitAfterHit;
+    #endregion
+
+    private HealthSystem _healthSystem;
 
     public void Initialize(Transform target)
     {
@@ -49,7 +52,7 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         _healthSystem.OnDeath += Death;
 
-        _testTarget = target;
+        _enemyTarget = target;
 
         _ctCurrentState = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
         WanderingAsync(_ctCurrentState.Token).Forget();
@@ -58,7 +61,7 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     private void Update()
     {
-        if (Vector3.Distance(transform.position, _testTarget.position) < _reactionRadius && !_isMovingToTarget)
+        if (Vector3.Distance(transform.position, _enemyTarget.position) < _reactionRadius && !_isMovingToTarget)
         {
             _ctCurrentState?.Cancel();
             _ctCurrentState?.Dispose();
@@ -67,12 +70,11 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
             MoveToTargetAsync(_ctCurrentState.Token).Forget();
             _isMovingToTarget = true;
         }
-
     }
 
     private void ActivateHealthBar()
     {
-        if (_healthSystem.CurrentHealth <= 0)
+        if (_healthSystem == null || _healthSystem.CurrentHealth <= 0)
             return;
 
         _healthBar.Activate();
@@ -100,7 +102,6 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
 
-
     public void ChangeHealth(int damage)
     {
         if (_healthSystem == null)
@@ -115,7 +116,7 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         {
             var carController = other.GetComponentInParent<CarController>();
             carController.DealDamage(-_damage);
-            Death();
+            ChangeHealth(-_healthSystem.MaxHealth);
         }
     }
 
@@ -153,7 +154,6 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     }
 
-
     private async UniTaskVoid WanderingAsync(CancellationToken ct)
     {
 
@@ -187,10 +187,11 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         while (!ct.IsCancellationRequested)
         {
-            _unitMovement.MoveToTarget(_testTarget.position, _speed, _rotationSpeed);
+            if (Vector3.Distance(transform.position, _enemyTarget.position) > _reactionRadius + _distanceToDeathInMoving)
+                ReturnToPool();
+
+            _unitMovement.MoveToTarget(_enemyTarget.position, _speed, _rotationSpeed);
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
-
-
         }
     }
 
