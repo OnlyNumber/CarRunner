@@ -1,6 +1,7 @@
 using System;
-using System.Collections;
 using UnityEngine;
+using Cysharp.Threading.Tasks;
+using System.Threading;
 
 public class Projectile : MonoBehaviour, IDisposable, IPooledObject
 {
@@ -15,7 +16,8 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
     public event Action<IPooledObject> ReturnToPoolAction;
     public GameObject GameObject => gameObject;
 
-    private Coroutine currentFlyingCoroutine;
+    private CancellationTokenSource _cts;
+
 
     public void Initialize(int damage, Vector3 direction)
     {
@@ -23,25 +25,30 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
         this.direction = direction;
         _currentLifetime = 0;
 
-        currentFlyingCoroutine = StartCoroutine(Flying());
+        _cts?.Cancel();
+        _cts?.Dispose();
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
 
+        FlyingAsync(_cts.Token).Forget();
     }
 
-    private IEnumerator Flying()
+    private async UniTaskVoid FlyingAsync(CancellationToken ct)
     {
-        do
+        while (!ct.IsCancellationRequested)
         {
-            yield return null;
             float time = Time.deltaTime;
 
             transform.position += direction * _speed * time;
             _currentLifetime += time;
 
             if (_currentLifetime > _projectileLifetime)
+            {
                 ReturnToPool();
+                return; 
+            }
 
-
-        } while (true);
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+        }
     }
 
     private void OnTriggerEnter(Collider other)
@@ -64,11 +71,7 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
     public void Dispose()
     {
         direction = Vector3.zero;
-        if (currentFlyingCoroutine != null)
-            StopCoroutine(currentFlyingCoroutine);
-
-        currentFlyingCoroutine = null;
-        //Destroy(gameObject);
+        _cts?.Cancel();
     }
 
 }

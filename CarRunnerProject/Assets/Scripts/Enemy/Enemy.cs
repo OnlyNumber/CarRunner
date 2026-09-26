@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDisposable, IPooledObject
@@ -26,7 +28,6 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     private HealthSystem _healthSystem;
 
-    private Coroutine _currentState;
     private Transform _testTarget;
     private bool _isMovingToTarget = false;
     private UnitAnimator.StateAnimation _lastAnimation;
@@ -35,7 +36,9 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     public event Action<IPooledObject> ReturnToPoolAction;
 
-    private Coroutine currentWaitAfterHit;
+    private CancellationTokenSource _ctCurrentState;
+
+    private CancellationTokenSource _ctWaitAfterHit;
 
     public void Initialize(Transform target)
     {
@@ -48,7 +51,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         _testTarget = target;
 
-        _currentState = StartCoroutine(Wandering());
+        _ctCurrentState = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+        WanderingAsync(_ctCurrentState.Token).Forget();
 
     }
 
@@ -56,50 +60,14 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
     {
         if (Vector3.Distance(transform.position, _testTarget.position) < _reactionRadius && !_isMovingToTarget)
         {
-            StopCoroutine(_currentState);
-            _currentState = StartCoroutine(MoveToTarget());
+            _ctCurrentState?.Cancel();
+            _ctCurrentState?.Dispose();
+            _ctCurrentState = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+
+            MoveToTargetAsync(_ctCurrentState.Token).Forget();
             _isMovingToTarget = true;
         }
 
-    }
-
-
-    private IEnumerator MoveToTarget()
-    {
-        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
-
-        do
-        {
-            _unitMovement.MoveToTarget(_testTarget.position, _speed, _rotationSpeed);
-            yield return null;
-
-        } while (true);
-    }
-
-    private IEnumerator Wandering()
-    {
-
-        do
-        {
-            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Idle);
-            yield return new WaitForSeconds(UnityEngine.Random.Range(_wanderWaiting.x, _wanderWaiting.y));
-
-            float x = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
-            float y = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
-
-            Vector3 wanderPosition = transform.position + new Vector3(x, 0, y);
-
-            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
-
-            do
-            {
-                _unitMovement.MoveToTarget(wanderPosition, _speed, _rotationSpeed);
-                yield return null;
-
-            } while (Vector3.Distance(transform.position, wanderPosition) > 0.5f);
-
-
-        } while (true);
     }
 
     private void ActivateHealthBar()
@@ -122,21 +90,16 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         if (_unitAnimator.CurrentAnimaion != UnitAnimator.StateAnimation.Hitted)
             _lastAnimation = _unitAnimator.CurrentAnimaion;
 
-        if (currentWaitAfterHit != null)
-            StopCoroutine(currentWaitAfterHit);
 
-        currentWaitAfterHit = StartCoroutine(BackToAnimation());
+        _ctWaitAfterHit?.Cancel();
+        _ctWaitAfterHit?.Dispose();
+        _ctWaitAfterHit = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+
+        BackToAnimationAsync(_ctWaitAfterHit.Token).Forget();
+
         _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
 
-    private IEnumerator BackToAnimation()
-    {
-        yield return new WaitForSeconds(_unitAnimator.GetCurrentAnimatorClipInfo().clip.length);
-        _unitAnimator.SetAnimation(_lastAnimation);
-
-        currentWaitAfterHit = null;
-
-    }
 
     public void ChangeHealth(int damage)
     {
@@ -178,15 +141,64 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         _healthSystem = null;
 
-        if (_currentState != null)
-            StopCoroutine(_currentState);
+        _ctCurrentState?.Cancel();
+        _ctCurrentState?.Dispose();
+        _ctCurrentState = null;
 
-        _currentState = null;
+        _ctWaitAfterHit?.Cancel();
+        _ctWaitAfterHit?.Dispose();
+        _ctWaitAfterHit = null;
 
-        if (currentWaitAfterHit != null)
-            StopCoroutine(currentWaitAfterHit);
+        _isMovingToTarget = false;
 
-        currentWaitAfterHit = null;
+    }
+
+
+    private async UniTaskVoid WanderingAsync(CancellationToken ct)
+    {
+
+        while (!ct.IsCancellationRequested)
+        {
+            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Idle);
+            await UniTask.Delay(TimeSpan.FromSeconds(UnityEngine.Random.Range(_wanderWaiting.x, _wanderWaiting.y)), cancellationToken: ct);
+
+            float x = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
+            float y = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
+
+            Vector3 wanderPosition = transform.position + new Vector3(x, 0, y);
+
+            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
+
+            do
+            {
+                _unitMovement.MoveToTarget(wanderPosition, _speed, _rotationSpeed);
+                await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+
+            } while (Vector3.Distance(transform.position, wanderPosition) > 0.5f);
+
+
+        }
+    }
+
+    private async UniTaskVoid MoveToTargetAsync(CancellationToken ct)
+    {
+        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
+
+        while (!ct.IsCancellationRequested)
+        {
+            _unitMovement.MoveToTarget(_testTarget.position, _speed, _rotationSpeed);
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+
+        }
+    }
+
+    private async UniTaskVoid BackToAnimationAsync(CancellationToken ct)
+    {
+        await UniTask.Delay(TimeSpan.FromSeconds(_unitAnimator.GetCurrentAnimatorClipInfo().clip.length), cancellationToken: ct);
+
+        _unitAnimator.SetAnimation(_lastAnimation);
 
     }
 }

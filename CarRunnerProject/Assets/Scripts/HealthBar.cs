@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
@@ -12,28 +14,31 @@ public class HealthBar : MonoBehaviour
 
     private float _currentPercent = 1;
     private float _settedPercent;
-    private Coroutine _slowHealthCoroutine;
-    private Coroutine _watchInCameraCoroutine;
-
+    private CancellationTokenSource _ctSlowHealth;
+    private UniTask _slowHealthUniTask;
+    private CancellationTokenSource _ctWatchCamera;
 
     public void Activate()
     {
         gameObject.SetActive(true);
-        _watchInCameraCoroutine = StartCoroutine(WatchInCamera());
+
+        _ctWatchCamera?.Cancel();
+        _ctWatchCamera?.Dispose();
+        _ctWatchCamera = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+
+        WatchInCameraAsync(_ctWatchCamera.Token).Forget();
     }
 
     public void Hide()
     {
         #region Coroutine
-        if (_slowHealthCoroutine != null)
-            StopCoroutine(_slowHealthCoroutine);
+        _ctSlowHealth?.Cancel();
+        _ctSlowHealth?.Dispose();
 
-        _slowHealthCoroutine = null;
+        _ctWatchCamera?.Cancel();
+        _ctWatchCamera?.Dispose();
 
-        if (_watchInCameraCoroutine != null)
-            StopCoroutine(_watchInCameraCoroutine);
 
-        _watchInCameraCoroutine = null;
         #endregion
         _currentPercent = 1;
 
@@ -45,8 +50,35 @@ public class HealthBar : MonoBehaviour
         _settedPercent = percentOfHealth;
         _health.value = _settedPercent;
 
-        if (_slowHealthCoroutine == null)
-            _slowHealthCoroutine = StartCoroutine(ChangeHealth());
+        if (_slowHealthUniTask.Status == UniTaskStatus.Pending)
+            return;
+
+        _ctSlowHealth?.Cancel();
+        _ctSlowHealth?.Dispose();
+        _ctSlowHealth = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+
+        _slowHealthUniTask = ChangeHealthAsync(_ctSlowHealth.Token);
+    }
+
+    public async UniTask ChangeHealthAsync(CancellationToken ct)
+    {
+        do
+        {
+            _currentPercent -= Time.deltaTime * (_speedSlowerHealth / 100);
+            _slowerHealth.value = _currentPercent;
+
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+
+        } while (_currentPercent >= _settedPercent);
+    }
+
+    public async UniTaskVoid WatchInCameraAsync(CancellationToken ct)
+    {
+        while (!ct.IsCancellationRequested)
+        {
+            transform.rotation = Quaternion.Euler(new Vector3(45, 0, 0));
+            await UniTask.Yield(PlayerLoopTiming.Update, ct);
+        }
     }
 
     private IEnumerator ChangeHealth()
@@ -59,21 +91,8 @@ public class HealthBar : MonoBehaviour
             yield return null;
 
         } while (_currentPercent >= _settedPercent);
-        
-        _slowHealthCoroutine = null;
+
+        //_ctSlowHealth = null;
     }
-
-    private IEnumerator WatchInCamera()
-    {
-        do
-        {
-            transform.rotation = Quaternion.Euler(new Vector3(45, 0, 0));
-            yield return null;
-
-        } while (true);
-
-    }
-
-
 
 }

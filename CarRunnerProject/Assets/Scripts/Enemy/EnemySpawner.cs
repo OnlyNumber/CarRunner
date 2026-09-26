@@ -1,4 +1,7 @@
+using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using Unity.VisualScripting.ReorderableList;
 using UnityEngine;
 using UnityEngine.PlayerLoop;
@@ -24,17 +27,39 @@ public class EnemySpawner : MonoBehaviour
         _target = target;
     }
 
-    public void SpawnWave(Vector3 position, float spawnRadius, int countOfEnemiesPerWave)
+    public async UniTaskVoid SpawnWaveAsync(Vector3 position, float spawnRadius, int countOfEnemiesPerWave, CancellationToken ct = default)
     {
-        for (int i = 0; i < countOfEnemiesPerWave; i++)
+        var linkedToken = CancellationTokenSource.CreateLinkedTokenSource(ct, this.GetCancellationTokenOnDestroy()).Token;
+
+        try
         {
-            var enemy = _enemiesPool.Get();
-            (enemy as Enemy).Initialize(_target);
-            enemy.GameObject.transform.position = position + new Vector3(Random.Range(-spawnRadius, spawnRadius), 0, Random.Range(-spawnRadius, spawnRadius));
-            _allEnemies.Add(enemy);
+            for (int i = 0; i < countOfEnemiesPerWave; i++)
+            {
+                var enemy = _enemiesPool.Get();
+
+                if (enemy is Enemy enemyComponent)
+                {
+                    enemyComponent.Initialize(_target);
+                }
+
+                Vector3 randomOffset = new Vector3(
+                    UnityEngine.Random.Range(-spawnRadius, spawnRadius),
+                    0f,
+                    UnityEngine.Random.Range(-spawnRadius, spawnRadius)
+                );
+
+                enemy.GameObject.transform.position = position + randomOffset;
+                _allEnemies.Add(enemy);
+
+                await UniTask.Delay(TimeSpan.FromSeconds(0.1f), cancellationToken: linkedToken);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            Debug.Log("Спавн хвилі скасовано.");
         }
     }
-    
+
     public void ReturnAllEnemies()
     {
         foreach (var item in _allEnemies)

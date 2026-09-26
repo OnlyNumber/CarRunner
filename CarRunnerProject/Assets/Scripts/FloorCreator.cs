@@ -72,9 +72,7 @@ public class FloorCreator : MonoBehaviour
             platform.position = currentLastPlatform.position + Vector3.forward * distanceBetweenPlatforms;
 
             for (int i = -_spawnTimes/2; i < _spawnTimes/2; i++)
-            {
-                _enemySpawner.SpawnWave(platform.position + Vector3.forward * i * _spawnDistance, _spawnRadius, _spawnCount);
-            }
+                _enemySpawner.SpawnWaveAsync(platform.position + Vector3.forward * i * _spawnDistance, _spawnRadius, _spawnCount).Forget();
 
         }
     }
