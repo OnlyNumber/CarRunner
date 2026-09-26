@@ -2,13 +2,10 @@ using System;
 using System.Collections;
 using UnityEngine;
 
-public class Enemy : MonoBehaviour, IDisposable
+public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 {
-    [SerializeField] private UnitAnimator _unitAnimator;
-    [SerializeField] private UnitMovement _unitMovement;
 
-    //[SerializeField] private GameObject _enemyModel;
-
+    #region  Stats
     [SerializeField] private float _wanderRadius;
     [SerializeField] private Vector2 _wanderWaiting;
 
@@ -16,10 +13,17 @@ public class Enemy : MonoBehaviour, IDisposable
     [SerializeField] private float _speed = 5;
     [SerializeField] private float _rotationSpeed = 60;
 
+    [SerializeField] private int _damage;
+    [SerializeField] private int _health;
 
-    [SerializeField] private int damage;
+    #endregion
 
+    #region  Components
+    [SerializeField] private UnitAnimator _unitAnimator;
+    [SerializeField] private UnitMovement _unitMovement;
     [SerializeField] private HealthBar _healthBar;
+    #endregion
+
     private HealthSystem _healthSystem;
 
     private Coroutine _currentState;
@@ -27,23 +31,20 @@ public class Enemy : MonoBehaviour, IDisposable
     private bool _isMovingToTarget = false;
     private UnitAnimator.StateAnimation _lastAnimation;
 
+    public GameObject GameObject => gameObject;
 
-    private void Start()
-    {
-        Initialize();
-    }
+    public event Action<IPooledObject> ReturnToPoolAction;
 
-    private void Initialize()
+    public void Initialize(Transform target)
     {
-        _healthSystem = new HealthSystem(15);
+        _healthSystem = new HealthSystem(_health);
 
         _healthSystem.OnHealthChanged += ActivateHealthBar;
         _healthSystem.OnHealthChanged += ChangeHealth;
 
         _healthSystem.OnDeath += Death;
 
-        //TODO: Change it later
-        _testTarget = GameObject.Find("PlayerCar").transform;
+        _testTarget = target;
 
         _currentState = StartCoroutine(Wandering());
 
@@ -126,8 +127,6 @@ public class Enemy : MonoBehaviour, IDisposable
 
     }
 
-
-
     public void ChangeHealth(int damage)
     {
         _healthSystem.ChangeHealth(damage);
@@ -138,23 +137,35 @@ public class Enemy : MonoBehaviour, IDisposable
         if (other.gameObject.CompareTag("Player"))
         {
             var carController = other.GetComponentInParent<CarController>();
-            carController.DealDamage(-damage);
+            carController.DealDamage(-_damage);
             Death();
         }
     }
 
     private void Death()
     {
+        ReturnToPool();
+    }
+
+    [ContextMenu("ReturnToPool")]
+    public void ReturnToPool()
+    {
         Dispose();
-        //Change to return pool 
-        Destroy(gameObject);
+        ReturnToPoolAction?.Invoke(this);
     }
 
     public void Dispose()
     {
         _healthSystem.OnHealthChanged -= ActivateHealthBar;
         _healthSystem.OnHealthChanged -= ChangeHealth;
+        _healthSystem.OnDeath -= Death;
+
 
         _healthSystem = null;
+
+        if (_currentState != null)
+            StopCoroutine(_currentState);
+
+        _currentState = null;
     }
 }

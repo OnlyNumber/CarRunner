@@ -23,10 +23,7 @@ public class FloorCreator : MonoBehaviour
     private void Start()
     {
         CreatePlatforms();
-        _enemySpawner.SpawnWave(_platformsPool[1].position, 5, 1);
-        _enemySpawner.SpawnWave(_platformsPool[2].position, 5, 1);
-        _enemySpawner.SpawnWave(_platformsPool[3].position, 5, 1);
-
+        MovePlatformsToStart();
     }
 
     private void CreatePlatforms()
@@ -36,11 +33,9 @@ public class FloorCreator : MonoBehaviour
             var platform = Instantiate(platformPrefab, ParentForPlatforms);
             platform.position = Vector3.zero;
             _platformsPool.Add(platform);
-            SetPlatformPosition(platform);
-            _enemySpawner.SpawnWave(platform.position, 5, 1);
         }
-
     }
+
 
     private void Update()
     {
@@ -59,12 +54,23 @@ public class FloorCreator : MonoBehaviour
         Transform currentLastPlatform = _platformsPool[0];
 
         foreach (var platformFromPool in _platformsPool)
-        {
             if (currentLastPlatform.position.z < platformFromPool.position.z)
                 currentLastPlatform = platformFromPool;
-        }
+        
 
         if (currentLastPlatform != platform)
+        {
             platform.position = currentLastPlatform.position + Vector3.forward * distanceBetweenPlatforms;
+            _enemySpawner.SpawnWave(platform.position, 4, 10);
+        }
+    }
+
+    public void MovePlatformsToStart()
+    {
+        foreach (var platform in _platformsPool)
+            platform.position = Vector3.zero;
+
+        foreach (var platform in _platformsPool)
+            SetPlatformPosition(platform);
     }
 }

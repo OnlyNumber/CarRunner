@@ -49,14 +49,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2885c2356503e8f419cec3e561528ad2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
-  _unitAnimator: {fileID: 8718916388149642038}
-  _unitMovement: {fileID: 3814532481405731859}
   _wanderRadius: 3
   _wanderWaiting: {x: 1, y: 3}
   _reactionRadius: 9
   _speed: 3
   _rotationSpeed: 120
-  damage: 5
+  _damage: 5
+  _health: 10
+  _unitAnimator: {fileID: 8718916388149642038}
+  _unitMovement: {fileID: 3814532481405731859}
   _healthBar: {fileID: 7753223565282245801}
 --- !u!136 &8533631969840036752
 CapsuleCollider:
