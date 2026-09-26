@@ -1,18 +1,32 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class Enemy : MonoBehaviour, IDisposable
 {
-    //[SerializeField] private Collider _enemyCollider;
-    [SerializeField] private GameObject _enemyModel;
+    [SerializeField] private UnitAnimator _unitAnimator;
+    [SerializeField] private UnitMovement _unitMovement;
+
+    //[SerializeField] private GameObject _enemyModel;
+
+    [SerializeField] private float _wanderRadius;
+    [SerializeField] private Vector2 _wanderWaiting;
 
     [SerializeField] private float _reactionRadius;
-    [SerializeField] private float _speed;
+    [SerializeField] private float _speed = 5;
+    [SerializeField] private float _rotationSpeed = 60;
+
 
     [SerializeField] private int damage;
 
     [SerializeField] private HealthBar _healthBar;
     private HealthSystem _healthSystem;
+
+    private Coroutine _currentState;
+    private Transform _testTarget;
+    private bool _isMovingToTarget = false;
+    private UnitAnimator.StateAnimation _lastAnimation;
+
 
     private void Start()
     {
@@ -28,47 +42,61 @@ public class Enemy : MonoBehaviour, IDisposable
 
         _healthSystem.OnDeath += Death;
 
-    }
-    #region  Test
+        //TODO: Change it later
+        _testTarget = GameObject.Find("PlayerCar").transform;
 
-    public bool TestAttack = false;
-    public GameObject TestTarget;
+        _currentState = StartCoroutine(Wandering());
 
-    [ContextMenu("ActivateTest")]
-    public void ActivateTest()
-    {
-        TestTarget = GameObject.Find("PlayerCar");
-        TestAttack = true;
     }
 
     private void Update()
     {
-        if (TestAttack)
+        if (Vector3.Distance(transform.position, _testTarget.position) < _reactionRadius && !_isMovingToTarget)
         {
-            transform.position += transform.forward * _speed * Time.deltaTime;
-
-            Vector3 dir = TestTarget.transform.position - transform.position; 
-
-            Vector3 moveDirection = new Vector3(dir.x, 0f, dir.z).normalized;
-
-            // 2. Якщо гравець натискає кнопки (є напрямок)
-            if (moveDirection != Vector3.zero)
-            {
-                // Створюємо цільовий поворот у напрямку руху
-                Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-
-                // Плавне повертання з постійною швидкістю
-                transform.rotation = Quaternion.RotateTowards(
-                    transform.rotation,
-                    targetRotation,
-                    60 * Time.deltaTime
-                );
-            }
-
-            //transform.rotation =
+            StopCoroutine(_currentState);
+            _currentState = StartCoroutine(MoveToTarget());
+            _isMovingToTarget = true;
         }
+
     }
-    #endregion
+
+
+    private IEnumerator MoveToTarget()
+    {
+        do
+        {
+            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
+            _unitMovement.MoveToTarget(_testTarget.position, _speed, _rotationSpeed);
+            yield return null;
+
+        } while (true);
+    }
+
+    private IEnumerator Wandering()
+    {
+        do
+        {
+            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Idle);
+            yield return new WaitForSeconds(UnityEngine.Random.Range(_wanderWaiting.x, _wanderWaiting.y));
+
+            float x = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
+            float y = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
+
+            Vector3 wanderPosition = transform.position + new Vector3(x, 0, y);
+
+            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
+
+            do
+            {
+                _unitMovement.MoveToTarget(wanderPosition, _speed, _rotationSpeed);
+                yield return null;
+
+            } while (Vector3.Distance(transform.position, wanderPosition) > 0.5f);
+
+
+        } while (true);
+    }
+
     private void ActivateHealthBar()
     {
         if (_healthSystem.CurrentHealth <= 0)
@@ -86,7 +114,19 @@ public class Enemy : MonoBehaviour, IDisposable
 
         _healthBar.ChangeHealthBar((float)_healthSystem.CurrentHealth / (float)_healthSystem.MaxHealth);
 
+        _lastAnimation = _unitAnimator.CurrentAnimaion;
+        StartCoroutine(BackToAnimation());
+        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
+
+    private IEnumerator BackToAnimation()
+    {
+        yield return new WaitForSeconds(_unitAnimator.GetCurrentAnimatorClipInfo().clip.length);
+        _unitAnimator.SetAnimation(_lastAnimation);
+
+    }
+
+
 
     public void ChangeHealth(int damage)
     {

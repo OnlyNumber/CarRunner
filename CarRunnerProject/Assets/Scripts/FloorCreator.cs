@@ -23,7 +23,10 @@ public class FloorCreator : MonoBehaviour
     private void Start()
     {
         CreatePlatforms();
-        _enemySpawner.SpawnWave(_platformsPool[1].position, 5, 5);
+        _enemySpawner.SpawnWave(_platformsPool[1].position, 5, 1);
+        _enemySpawner.SpawnWave(_platformsPool[2].position, 5, 1);
+        _enemySpawner.SpawnWave(_platformsPool[3].position, 5, 1);
+
     }
 
     private void CreatePlatforms()
@@ -34,6 +37,7 @@ public class FloorCreator : MonoBehaviour
             platform.position = Vector3.zero;
             _platformsPool.Add(platform);
             SetPlatformPosition(platform);
+            _enemySpawner.SpawnWave(platform.position, 5, 1);
         }
 
     }
