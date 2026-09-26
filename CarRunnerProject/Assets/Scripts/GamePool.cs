@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Pool;
 
-public class GamePool<T> where T : IPooledObject
+public class GamePool
 {
     private IPooledObject _pooledObjectPrefab;
     private ObjectPool<IPooledObject> _objectPool;

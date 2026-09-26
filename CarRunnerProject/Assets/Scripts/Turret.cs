@@ -1,3 +1,4 @@
+using Unity.VisualScripting;
 using UnityEngine;
 
 public class Turret : MonoBehaviour
@@ -7,12 +8,18 @@ public class Turret : MonoBehaviour
     [SerializeField] private Transform _firePoint;
 
     [SerializeField] private Projectile _projectile;
+    private GamePool _projectilePool = new();
+
     [SerializeField] private float _timeBetweenShoots;
     [SerializeField] private int _damage;
 
     private float _currentAttackTime;
 
 
+    private void Awake()
+    {
+        _projectilePool.Initialize(_projectile);
+    }
 
     void Update()
     {
@@ -37,8 +44,10 @@ public class Turret : MonoBehaviour
 
     public void Shoot(Vector3 direction)
     {
-        var projectile = Instantiate(_projectile, _firePoint.position, Quaternion.identity);
-        projectile.Initialize(_damage, direction);
+        var projectile = _projectilePool.Get();
+
+        projectile.GameObject.transform.position = _firePoint.position;
+        (projectile as Projectile).Initialize(_damage, direction);
     }
 
 }

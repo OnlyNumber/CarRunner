@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class Projectile : MonoBehaviour, IDisposable, IPooledObject
@@ -7,19 +8,40 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
     private Vector3 direction;
     [SerializeField] private float _speed;
 
-    public event Action<IPooledObject> ReturnToPoolAction;
+    [SerializeField] private float _projectileLifetime;
+    private float _currentLifetime = 0;
 
+
+    public event Action<IPooledObject> ReturnToPoolAction;
     public GameObject GameObject => gameObject;
+
+    private Coroutine currentFlyingCoroutine;
 
     public void Initialize(int damage, Vector3 direction)
     {
         this._damage = damage;
         this.direction = direction;
+        _currentLifetime = 0;
+
+        currentFlyingCoroutine = StartCoroutine(Flying());
+
     }
 
-    private void Update()
+    private IEnumerator Flying()
     {
-        transform.position += direction * _speed * Time.deltaTime;
+        do
+        {
+            yield return null;
+            float time = Time.deltaTime;
+
+            transform.position += direction * _speed * time;
+            _currentLifetime += time;
+
+            if (_currentLifetime > _projectileLifetime)
+                ReturnToPool();
+
+
+        } while (true);
     }
 
     private void OnTriggerEnter(Collider other)
@@ -28,13 +50,25 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
         {
             var enemy = other.GetComponent<Enemy>();
             enemy.ChangeHealth(-_damage);
-            Dispose();
+            ReturnToPool();
         }
     }
 
+    public void ReturnToPool()
+    {
+        Dispose();
+        ReturnToPoolAction?.Invoke(this);
+    }
+
+
     public void Dispose()
     {
-        Destroy(gameObject);
+        direction = Vector3.zero;
+        if (currentFlyingCoroutine != null)
+            StopCoroutine(currentFlyingCoroutine);
+
+        currentFlyingCoroutine = null;
+        //Destroy(gameObject);
     }
 
 }

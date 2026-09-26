@@ -8,7 +8,7 @@ public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private Enemy enemyPrefab;
 
-    private GamePool<Enemy> _enemiesPool = new();
+    private GamePool _enemiesPool = new();
 
     private HashSet<IPooledObject> _allEnemies = new();
 
