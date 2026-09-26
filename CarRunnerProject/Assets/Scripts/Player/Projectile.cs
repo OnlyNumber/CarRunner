@@ -1,12 +1,15 @@
 using System;
-using UnityEditor.Experimental.GraphView;
 using UnityEngine;
 
-public class Projectile : MonoBehaviour, IDisposable
+public class Projectile : MonoBehaviour, IDisposable, IPooledObject
 {
     private int _damage;
     private Vector3 direction;
     [SerializeField] private float _speed;
+
+    public event Action<IPooledObject> ReturnToPoolAction;
+
+    public GameObject GameObject => gameObject;
 
     public void Initialize(int damage, Vector3 direction)
     {

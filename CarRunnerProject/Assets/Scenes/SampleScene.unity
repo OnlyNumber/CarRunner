@@ -2838,7 +2838,7 @@ MonoBehaviour:
   _spawnTimes: 8
   _spawnDistance: 8.5
   _spawnRadius: 6
-  _spawnCount: 5
+  _spawnCount: 6
 --- !u!4 &543450653158717803
 Transform:
   m_ObjectHideFlags: 0

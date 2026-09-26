@@ -8,7 +8,7 @@ public class EnemySpawner : MonoBehaviour
 {
     [SerializeField] private Enemy enemyPrefab;
 
-    private ObjectPool<IPooledObject> _enemiesPool;
+    private GamePool<Enemy> _enemiesPool = new();
 
     private HashSet<IPooledObject> _allEnemies = new();
 
@@ -16,7 +16,7 @@ public class EnemySpawner : MonoBehaviour
 
     private void Awake()
     {
-        _enemiesPool = new ObjectPool<IPooledObject>(CreateEnemy, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, maxSize: 200);
+        _enemiesPool.Initialize(enemyPrefab);
     }
 
     public void SetTargetForEnemies(Transform target)
@@ -34,31 +34,7 @@ public class EnemySpawner : MonoBehaviour
             _allEnemies.Add(enemy);
         }
     }
-
-    #region Pool
-    IPooledObject CreateEnemy()
-    {
-        var enemy = Instantiate(enemyPrefab);
-        enemy.ReturnToPoolAction += _enemiesPool.Release;
-        return enemy;
-    }
-
-    void OnTakeFromPool(IPooledObject enemy)
-    {
-        enemy.GameObject.SetActive(true);
-    }
-
-    void OnReturnedToPool(IPooledObject enemy)
-    {
-        enemy.GameObject.SetActive(false);
-    }
-
-    void OnDestroyPoolObject(IPooledObject enemy)
-    {
-        Destroy(enemy.GameObject);
-    }
-    #endregion
-
+    
     public void ReturnAllEnemies()
     {
         foreach (var item in _allEnemies)
