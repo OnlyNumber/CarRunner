@@ -15,6 +15,15 @@ public class FloorCreator : MonoBehaviour
     [SerializeField] private CarController _carMover;
     [SerializeField] private EnemySpawner _enemySpawner;
 
+    [Header("Enemy spawn settings ")]
+    #region EnemySpawner
+
+    [SerializeField] private int _spawnTimes;
+    [SerializeField] private float _spawnDistance;
+    [SerializeField] private float _spawnRadius;
+    [SerializeField] private int _spawnCount;
+
+    #endregion
 
     private List<Transform> _platformsPool = new();
 
@@ -56,12 +65,17 @@ public class FloorCreator : MonoBehaviour
         foreach (var platformFromPool in _platformsPool)
             if (currentLastPlatform.position.z < platformFromPool.position.z)
                 currentLastPlatform = platformFromPool;
-        
+
 
         if (currentLastPlatform != platform)
         {
             platform.position = currentLastPlatform.position + Vector3.forward * distanceBetweenPlatforms;
-            _enemySpawner.SpawnWave(platform.position, 4, 10);
+
+            for (int i = -_spawnTimes/2; i < _spawnTimes/2; i++)
+            {
+                _enemySpawner.SpawnWave(platform.position + Vector3.forward * i * _spawnDistance, _spawnRadius, _spawnCount);
+            }
+
         }
     }
 

@@ -467,15 +467,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -2
+      value: -1.84
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalRotation.w
-      value: 1
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: 0.7071068
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalRotation.y
@@ -491,11 +491,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.85
+      value: 1.163
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
+      value: 90
       objectReference: {fileID: 0}
     - target: {fileID: 7177282640017763881, guid: 6bdbfdbc5ceaab94096e3b453840a0fc, type: 3}
       propertyPath: m_LocalEulerAnglesHint.y
@@ -912,13 +912,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 330585543}
   serializedVersion: 2
-  m_LocalRotation: {x: 0.35232708, y: -0, z: -0, w: 0.93587697}
-  m_LocalPosition: {x: 0, y: 6.34, z: -8.46}
+  m_LocalRotation: {x: 0.43676177, y: -0, z: -0, w: 0.8995773}
+  m_LocalPosition: {x: 0, y: 11.38, z: -4.56}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 157124316}
-  m_LocalEulerAnglesHint: {x: 41.259, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 51.795, y: 0, z: 0}
 --- !u!114 &330585547
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2835,6 +2835,10 @@ MonoBehaviour:
   ParentForPlatforms: {fileID: 1123983760}
   _carMover: {fileID: 157124317}
   _enemySpawner: {fileID: 742807044}
+  _spawnTimes: 8
+  _spawnDistance: 8.5
+  _spawnRadius: 6
+  _spawnCount: 5
 --- !u!4 &543450653158717803
 Transform:
   m_ObjectHideFlags: 0
@@ -3405,10 +3409,10 @@ GameObject:
 SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
+  - {fileID: 157124316}
   - {fileID: 1337854540}
   - {fileID: 611036081}
   - {fileID: 1896548136}
   - {fileID: 410087041}
   - {fileID: 832575519}
-  - {fileID: 157124316}
   - {fileID: 10462147}

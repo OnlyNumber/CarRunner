@@ -35,6 +35,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     public event Action<IPooledObject> ReturnToPoolAction;
 
+    private Coroutine currentWaitAfterHit;
+
     public void Initialize(Transform target)
     {
         _healthSystem = new HealthSystem(_health);
@@ -64,9 +66,10 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     private IEnumerator MoveToTarget()
     {
+        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
+
         do
         {
-            _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
             _unitMovement.MoveToTarget(_testTarget.position, _speed, _rotationSpeed);
             yield return null;
 
@@ -75,6 +78,7 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     private IEnumerator Wandering()
     {
+
         do
         {
             _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Idle);
@@ -115,8 +119,13 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         _healthBar.ChangeHealthBar((float)_healthSystem.CurrentHealth / (float)_healthSystem.MaxHealth);
 
-        _lastAnimation = _unitAnimator.CurrentAnimaion;
-        StartCoroutine(BackToAnimation());
+        if (_unitAnimator.CurrentAnimaion != UnitAnimator.StateAnimation.Hitted)
+            _lastAnimation = _unitAnimator.CurrentAnimaion;
+
+        if (currentWaitAfterHit != null)
+            StopCoroutine(currentWaitAfterHit);
+
+        currentWaitAfterHit = StartCoroutine(BackToAnimation());
         _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
 
@@ -125,10 +134,15 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         yield return new WaitForSeconds(_unitAnimator.GetCurrentAnimatorClipInfo().clip.length);
         _unitAnimator.SetAnimation(_lastAnimation);
 
+        currentWaitAfterHit = null;
+
     }
 
     public void ChangeHealth(int damage)
     {
+        if (_healthSystem == null)
+            return;
+
         _healthSystem.ChangeHealth(damage);
     }
 
@@ -147,7 +161,6 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         ReturnToPool();
     }
 
-    [ContextMenu("ReturnToPool")]
     public void ReturnToPool()
     {
         Dispose();
@@ -156,10 +169,12 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
     public void Dispose()
     {
-        _healthSystem.OnHealthChanged -= ActivateHealthBar;
-        _healthSystem.OnHealthChanged -= ChangeHealth;
-        _healthSystem.OnDeath -= Death;
-
+        if (_healthSystem != null)
+        {
+            _healthSystem.OnHealthChanged -= ActivateHealthBar;
+            _healthSystem.OnHealthChanged -= ChangeHealth;
+            _healthSystem.OnDeath -= Death;
+        }
 
         _healthSystem = null;
 
@@ -167,5 +182,11 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
             StopCoroutine(_currentState);
 
         _currentState = null;
+
+        if (currentWaitAfterHit != null)
+            StopCoroutine(currentWaitAfterHit);
+
+        currentWaitAfterHit = null;
+
     }
 }

@@ -18,13 +18,13 @@ public class UnitAnimator : MonoBehaviour
         switch (stateAnimation)
         {
             case StateAnimation.Idle:
-                _animator.Play(Idle_Animation);
+                _animator.CrossFade(Idle_Animation, 0, 0);
                 break;
             case StateAnimation.Move:
-                _animator.Play(Move_Animation);
+                _animator.Play(Move_Animation, 0, 0);
                 break;
             case StateAnimation.Hitted:
-                _animator.Play(Hitted_Animation);
+                _animator.Play(Hitted_Animation, 0, 0);
                 break;
         }
 
