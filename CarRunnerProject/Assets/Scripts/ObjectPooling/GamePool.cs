@@ -3,19 +3,27 @@ using UnityEngine.Pool;
 
 public class GamePool
 {
+    private const string Pools_Place = "===POOLS===";
+
     private IPooledObject _pooledObjectPrefab;
     private ObjectPool<IPooledObject> _objectPool;
+    private Transform placeForPooledObject;
 
     public void Initialize(IPooledObject pooledObject)
     {
         _pooledObjectPrefab = pooledObject;
         _objectPool = new ObjectPool<IPooledObject>(CreatePooledObject, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, maxSize: 200);
-        
+
+        var place = GameObject.Find(Pools_Place).transform;
+        placeForPooledObject = new GameObject(_pooledObjectPrefab.GameObject.name + "Pool").transform;
+        placeForPooledObject.SetParent(place);
     }
 
     public IPooledObject Get()
     {
-        return _objectPool.Get();
+        var pooledObject = _objectPool.Get();
+        pooledObject.GameObject.transform.SetParent(placeForPooledObject);
+        return pooledObject;
     }
 
     public void Release(IPooledObject pooledObject)

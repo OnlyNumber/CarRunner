@@ -34,6 +34,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
     #region PooledObject
     public GameObject GameObject => gameObject;
     public event Action<IPooledObject> ReturnToPoolAction;
+
+    private GamePool _particlesPool;
     #endregion
 
     #region  UniTask
@@ -42,15 +44,19 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
     #endregion
 
     private HealthSystem _healthSystem;
+    [SerializeField] private BlinkEffect _blinkEffect;
 
-    public void Initialize(Transform target)
+    public void Initialize(Transform target, GamePool particlesPool)
     {
         _healthSystem = new HealthSystem(_health);
 
         _healthSystem.OnHealthChanged += ActivateHealthBar;
         _healthSystem.OnHealthChanged += ChangeHealth;
+        _healthSystem.OnHealthChanged += _blinkEffect.ActivateBlink;
 
         _healthSystem.OnDeath += Death;
+
+        _particlesPool = particlesPool;
 
         _enemyTarget = target;
 
@@ -99,6 +105,10 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         BackToAnimationAsync(_ctWaitAfterHit.Token).Forget();
 
+        var particles = (ParticlePooled)_particlesPool.Get();
+        particles.transform.position = transform.position;
+        particles.Activate();
+
         _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
 
@@ -137,6 +147,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         {
             _healthSystem.OnHealthChanged -= ActivateHealthBar;
             _healthSystem.OnHealthChanged -= ChangeHealth;
+            _healthSystem.OnHealthChanged -= _blinkEffect.ActivateBlink;
+
             _healthSystem.OnDeath -= Death;
         }
 

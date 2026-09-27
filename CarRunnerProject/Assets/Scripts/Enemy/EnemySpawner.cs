@@ -2,16 +2,20 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using Cysharp.Threading.Tasks;
-using Unity.VisualScripting.ReorderableList;
 using UnityEngine;
-using UnityEngine.PlayerLoop;
-using UnityEngine.Pool;
 
 public class EnemySpawner : MonoBehaviour
 {
-    [SerializeField] private Enemy enemyPrefab;
-
+    #region EnemiesPool
+    [SerializeField] private Enemy _enemyPrefab;
     private GamePool _enemiesPool = new();
+    #endregion
+
+    #region ParticlesPool
+    [SerializeField] private ParticlePooled _particlesPrefab;
+    private GamePool _particlesPool = new();
+    #endregion
+
 
     private HashSet<IPooledObject> _allEnemies = new();
 
@@ -19,7 +23,8 @@ public class EnemySpawner : MonoBehaviour
 
     private void Awake()
     {
-        _enemiesPool.Initialize(enemyPrefab);
+        _enemiesPool.Initialize(_enemyPrefab);
+        _particlesPool.Initialize(_particlesPrefab);
     }
 
     public void SetTargetForEnemies(Transform target)
@@ -39,7 +44,7 @@ public class EnemySpawner : MonoBehaviour
 
                 if (enemy is Enemy enemyComponent)
                 {
-                    enemyComponent.Initialize(_target);
+                    enemyComponent.Initialize(_target, _particlesPool);
                 }
 
                 Vector3 randomOffset = new Vector3(

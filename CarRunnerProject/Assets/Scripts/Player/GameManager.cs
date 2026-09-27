@@ -58,6 +58,7 @@ public class GameManager : MonoBehaviour
     private void StopGame()
     {
         GameplayWindow.HideWindow();
+        _enemySpawner.ReturnAllEnemies();
         _playerCar.StopCar();
     }
 
@@ -75,7 +76,6 @@ public class GameManager : MonoBehaviour
 
     private void RestartGame()
     {
-        _enemySpawner.ReturnAllEnemies();
         _floorCreator.MovePlatformsToStart();
         _playerCar.ResetHealth();
         _playerCar.transform.position = Vector3.zero;

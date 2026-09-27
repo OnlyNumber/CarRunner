@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8533631969840036752}
   - component: {fileID: 3814532481405731859}
   - component: {fileID: 8718916388149642038}
+  - component: {fileID: 7221000408386930444}
   m_Layer: 0
   m_Name: Enemy
   m_TagString: Enemy
@@ -60,6 +61,7 @@ MonoBehaviour:
   _unitMovement: {fileID: 3814532481405731859}
   _healthBar: {fileID: 7753223565282245801}
   _distanceToDeathInMoving: 2
+  _blinkEffect: {fileID: 7221000408386930444}
 --- !u!136 &8533631969840036752
 CapsuleCollider:
   m_ObjectHideFlags: 0
@@ -108,6 +110,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UnitAnimator
   _animator: {fileID: 8204602806563500897}
+--- !u!114 &7221000408386930444
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6133625606267073283}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4afa4597a5093254b8ca7146e7efadb9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BlinkEffect
+  _blinkRenderers:
+  - meshRenderer: {fileID: 0}
+    skinnedRenderer: {fileID: 1695319211981759379}
+    meshMaterial: {fileID: 2100000, guid: 138d04a63c07662408b4efcc77fc534c, type: 2}
+  _blinkMaterial: {fileID: 2100000, guid: fbfa51551c61ec942bb42436107332bb, type: 2}
+  blinkTime: 0.1
+  blinkDelay: 1
 --- !u!1001 &1291704113627784843
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -286,6 +307,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 8fba94173e2a97041a18861de4fdcc9c, type: 3}
+--- !u!137 &1695319211981759379 stripped
+SkinnedMeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 4528812574583756579, guid: 8fba94173e2a97041a18861de4fdcc9c, type: 3}
+  m_PrefabInstance: {fileID: 2981216780656211120}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &4001230375543262183 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 2222615538149900119, guid: 8fba94173e2a97041a18861de4fdcc9c, type: 3}

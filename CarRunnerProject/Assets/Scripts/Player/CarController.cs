@@ -13,6 +13,7 @@ public class CarController : MonoBehaviour
     [SerializeField] private HealthBar _healthBar;
     private HealthSystem _healthSystem;
     public event Action OnDeath;
+    [SerializeField] private BlinkEffect _blinkEffect;
 
     private void Start()
     {
@@ -23,6 +24,8 @@ public class CarController : MonoBehaviour
     {
         _healthSystem = new HealthSystem(_maxHealth);
         _healthSystem.OnHealthChanged += ChangeHealth;
+        _healthSystem.OnHealthChanged += _blinkEffect.ActivateBlink;
+
         _healthSystem.OnDeath += () => OnDeath?.Invoke();
     }
 
