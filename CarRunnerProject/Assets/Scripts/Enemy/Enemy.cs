@@ -6,6 +6,7 @@ using UnityEngine;
 public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 {
     #region  Stats
+    [SerializeField] private float _wanderingBounds;
     [SerializeField] private float _wanderRadius;
     [SerializeField] private Vector2 _wanderWaiting;
 
@@ -188,6 +189,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
             float y = UnityEngine.Random.Range(-_wanderRadius, _wanderRadius);
 
             Vector3 wanderPosition = transform.position + new Vector3(x, 0, y);
+
+            wanderPosition.x = Mathf.Clamp(wanderPosition.x, -_wanderingBounds, _wanderingBounds);
 
             _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Move);
 

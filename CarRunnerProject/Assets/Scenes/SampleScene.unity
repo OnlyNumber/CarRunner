@@ -3404,7 +3404,7 @@ MonoBehaviour:
   _turret: {fileID: 543450653158717803}
   _firePoint: {fileID: 18837542}
   _projectile: {fileID: 4478092991467730140, guid: ee37cc52b738df6428d9fd2a2b2e4301, type: 3}
-  _timeBetweenShoots: 0.4
+  _timeBetweenShoots: 0.28
   _damage: 5
 --- !u!33 &3469287837125079213
 MeshFilter:

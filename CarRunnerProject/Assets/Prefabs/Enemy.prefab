@@ -50,6 +50,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2885c2356503e8f419cec3e561528ad2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  _wanderingBounds: 6
   _wanderRadius: 3
   _wanderWaiting: {x: 1, y: 3}
   _reactionRadius: 13

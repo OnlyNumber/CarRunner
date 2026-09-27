@@ -22,8 +22,11 @@ public class HealthBar : MonoBehaviour
     {
         gameObject.SetActive(true);
 
-        _ctWatchCamera?.Cancel();
-        _ctWatchCamera?.Dispose();
+        if (_ctWatchCamera != null)
+        {
+            _ctWatchCamera?.Cancel();
+            _ctWatchCamera?.Dispose();
+        }
         _ctWatchCamera = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
 
         WatchInCameraAsync(_ctWatchCamera.Token).Forget();
@@ -31,15 +34,21 @@ public class HealthBar : MonoBehaviour
 
     public void Hide()
     {
-        #region Coroutine
-        _ctSlowHealth?.Cancel();
-        _ctSlowHealth?.Dispose();
+        if (_ctSlowHealth != null)
+        {
+            _ctSlowHealth?.Cancel();
+            _ctSlowHealth?.Dispose();
 
-        _ctWatchCamera?.Cancel();
-        _ctWatchCamera?.Dispose();
+            _ctSlowHealth = null;
+        }
 
+        if (_ctWatchCamera != null)
+        {
+            _ctWatchCamera?.Cancel();
+            _ctWatchCamera?.Dispose();
 
-        #endregion
+            _ctWatchCamera = null;
+        }
         _currentPercent = 1;
 
         gameObject.SetActive(false);
@@ -52,9 +61,14 @@ public class HealthBar : MonoBehaviour
 
         if (_slowHealthUniTask.Status == UniTaskStatus.Pending)
             return;
-
-        _ctSlowHealth?.Cancel();
-        _ctSlowHealth?.Dispose();
+        
+        if (_ctSlowHealth != null)
+        {
+            _ctSlowHealth?.Cancel();
+            _ctSlowHealth?.Dispose();
+            
+            _ctSlowHealth = null;
+        }
         _ctSlowHealth = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
 
         _slowHealthUniTask = ChangeHealthAsync(_ctSlowHealth.Token);
@@ -70,6 +84,8 @@ public class HealthBar : MonoBehaviour
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
 
         } while (_currentPercent >= _settedPercent);
+
+        _ctSlowHealth = null;
     }
 
     public async UniTaskVoid WatchInCameraAsync(CancellationToken ct)
@@ -80,19 +96,4 @@ public class HealthBar : MonoBehaviour
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
         }
     }
-
-    private IEnumerator ChangeHealth()
-    {
-        do
-        {
-            _currentPercent -= Time.deltaTime * (_speedSlowerHealth / 100);
-            _slowerHealth.value = _currentPercent;
-
-            yield return null;
-
-        } while (_currentPercent >= _settedPercent);
-
-        //_ctSlowHealth = null;
-    }
-
 }
