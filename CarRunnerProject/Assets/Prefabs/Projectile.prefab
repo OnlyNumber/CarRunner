@@ -106,6 +106,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 81eb08b5415bd1b4e8087aabab43f411, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
+  _trailRenderer: {fileID: 5854305132857162227}
   _speed: 20
   _projectileLifetime: 10
 --- !u!54 &4002981142363381262
@@ -269,7 +270,7 @@ TrailRenderer:
     numCornerVertices: 0
     numCapVertices: 0
     alignment: 0
-    textureMode: 0
+    textureMode: 4
     textureScale: {x: 1, y: 1}
     shadowBias: 0.5
     generateLightingData: 0

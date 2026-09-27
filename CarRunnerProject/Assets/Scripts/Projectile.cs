@@ -5,8 +5,10 @@ using System.Threading;
 
 public class Projectile : MonoBehaviour, IDisposable, IPooledObject
 {
+    [SerializeField] private TrailRenderer _trailRenderer;
+
     private int _damage;
-    private Vector3 direction;
+    private Vector3 _direction;
     [SerializeField] private float _speed;
 
     [SerializeField] private float _projectileLifetime;
@@ -22,13 +24,14 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
     public void Initialize(int damage, Vector3 direction)
     {
         this._damage = damage;
-        this.direction = direction;
+        this._direction = direction;
         _currentLifetime = 0;
 
-        _cts?.Cancel();
-        _cts?.Dispose();
-        _cts = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+        _trailRenderer.Clear();
+        _trailRenderer.emitting = true;
 
+        _cts = CancellationTokenSource.CreateLinkedTokenSource(this.GetCancellationTokenOnDestroy());
+        
         FlyingAsync(_cts.Token).Forget();
     }
 
@@ -38,13 +41,13 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
         {
             float time = Time.deltaTime;
 
-            transform.position += direction * _speed * time;
+            transform.position += _direction * _speed * time;
             _currentLifetime += time;
 
             if (_currentLifetime > _projectileLifetime)
             {
                 ReturnToPool();
-                return; 
+                return;
             }
 
             await UniTask.Yield(PlayerLoopTiming.Update, ct);
@@ -63,6 +66,9 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
 
     public void ReturnToPool()
     {
+        if (!gameObject.activeInHierarchy)
+            return;
+
         Dispose();
         ReturnToPoolAction?.Invoke(this);
     }
@@ -70,8 +76,11 @@ public class Projectile : MonoBehaviour, IDisposable, IPooledObject
 
     public void Dispose()
     {
-        direction = Vector3.zero;
+        _trailRenderer.emitting = false;
+        _direction = Vector3.zero;
+
         _cts?.Cancel();
+        _cts?.Dispose();
     }
 
 }

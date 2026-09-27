@@ -53,6 +53,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         _healthSystem.OnHealthChanged += ActivateHealthBar;
         _healthSystem.OnHealthChanged += ChangeHealth;
         _healthSystem.OnHealthChanged += _blinkEffect.ActivateBlink;
+        _healthSystem.OnHealthChanged += CreateParticles;
+
 
         _healthSystem.OnDeath += Death;
 
@@ -105,11 +107,14 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
 
         BackToAnimationAsync(_ctWaitAfterHit.Token).Forget();
 
+        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
+    }
+
+    private void CreateParticles()
+    {
         var particles = (ParticlePooled)_particlesPool.Get();
         particles.transform.position = transform.position;
         particles.Activate();
-
-        _unitAnimator.SetAnimation(UnitAnimator.StateAnimation.Hitted);
     }
 
     public void ChangeHealth(int damage)
@@ -126,7 +131,8 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
         {
             var carController = other.GetComponentInParent<CarController>();
             carController.DealDamage(-_damage);
-            ChangeHealth(-_healthSystem.MaxHealth);
+            if (_healthSystem != null)
+                ChangeHealth(-_healthSystem.MaxHealth);
         }
     }
 
@@ -148,11 +154,15 @@ public class Enemy : MonoBehaviour, IDisposable, IPooledObject
             _healthSystem.OnHealthChanged -= ActivateHealthBar;
             _healthSystem.OnHealthChanged -= ChangeHealth;
             _healthSystem.OnHealthChanged -= _blinkEffect.ActivateBlink;
+            _healthSystem.OnHealthChanged -= CreateParticles;
+
 
             _healthSystem.OnDeath -= Death;
         }
 
         _healthSystem = null;
+
+        _healthBar.Hide();
 
         _ctCurrentState?.Cancel();
         _ctCurrentState?.Dispose();
